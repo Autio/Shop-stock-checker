@@ -1,5 +1,5 @@
 # Check if Prisma.fi has Playstation 5 is in stock and send an email if this is so
-import os
+import json
 import smtplib
 import urllib.request
 from datetime import datetime
@@ -22,30 +22,27 @@ def check_availability():
     except:
         log += "Error parsing website "
     
-
 def main():
     global log
-    
     available = check_availability()
     logfile = open('log.txt', 'r+')
     successmessage = "PS5 looks to be available! "
-    
+
     # Check if the PS5 has already been spotted once
     # Note, the log needs resetting if you want this process to continue
     if successmessage in logfile.read():
         print("PS5 already found")
         return
-    
+
     if(available):    
         log += successmessage
-        
         try:
             with open('credentials') as file:
-                lines = file.readlines()
-                username = lines[0].rstrip('\n')
-                password = lines[1].rstrip('\n')
-                from_address = lines[2].rstrip('\n')
-                to_address = lines[3].rstrip('\n')
+                config = json.load(file)
+                username = config['username']
+                password = config['password']
+                from_address = config['fromAddress']
+                to_address = config['toAddress']
         except: 
             log += "Error with credentials file "      
         
@@ -54,7 +51,6 @@ def main():
         msg['From'] = from_address
         msg['To'] = to_address
         msg.set_content("No nyt sitä pleikkaa o.\nKato vaikka: https://www.prisma.fi/fi/prisma/prisma-gaming-playstation-5")
-
 
         try: 
             server = smtplib.SMTP('smtp.gmail.com', 587)
@@ -72,4 +68,6 @@ def main():
         log += "No PS5 seems to be available "
     logfile.write(str(datetime.now()) + " " + log + "\n")
     logfile.close()
-main()
+
+if __name__ == '__main__':
+    main()
